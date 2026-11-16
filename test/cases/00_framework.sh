@@ -15,7 +15,7 @@ case "$STAGE" in
   gen)
     # 生成本用例的输入语料（要求确定性：固定种子/固定长度）
     if [ -x "$BIN/diff_kernels" ]; then
-      "$BIN/diff_kernels" > "$DATA/kernels-$SIDE.txt"
+      ${RUNNER:-} "$BIN/diff_kernels" > "$DATA/kernels-$SIDE.txt"
     else
       : > "$DATA/kernels-$SIDE.txt"
     fi
@@ -23,14 +23,14 @@ case "$STAGE" in
   run)
     # 实际的被测路径。示例：把内核自检的输出当"产物"，两侧应完全一致。
     if [ -x "$BIN/diff_kernels" ]; then
-      "$BIN/diff_kernels" > "$OUT/kernels.txt"
+      ${RUNNER:-} "$BIN/diff_kernels" > "$OUT/kernels.txt"
     else
       echo "缺少 $BIN/diff_kernels（先跑 scripts/build.sh）" >&2
       exit 1
     fi
     if [ -x "$BIN/cpu_probe" ]; then
       # cpu_probe 含 VLEN 等环境信息，只在同机比较；这里只取向量部分
-      "$BIN/cpu_probe" 2>/dev/null | grep -E '^(vlen|march|v_intrinsic)=' > "$OUT/probe.txt" || true
+      ${RUNNER:-} "$BIN/cpu_probe" 2>/dev/null | grep -E '^(vlen|march|v_intrinsic)=' > "$OUT/probe.txt" || true
     fi
     ;;
   *)
