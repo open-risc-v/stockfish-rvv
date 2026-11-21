@@ -27,6 +27,9 @@
 #include "../../memory.h"
 #include "../nnue_common.h"
 #include "../simd.h"
+#if defined(RVV_KERNELS) && defined(__riscv_v)
+#include "riscv/affine_rvv.h"
+#endif
 
 /*
   This file contains the definition for a fully connected layer (aka affine transform).
@@ -51,6 +54,11 @@ namespace Stockfish::Eval::NNUE::Layers {
 template<IndexType InputDimensions, IndexType PaddedInputDimensions, IndexType OutputDimensions>
 static void
 affine_transform_non_ssse3(i32* output, const i8* weights, const i32* biases, const u8* input) {
+#if defined(RVV_KERNELS) && defined(__riscv_v)
+    rvv_affine_transform<InputDimensions, PaddedInputDimensions, OutputDimensions>(
+        output, weights, biases, input);
+    return;
+#endif
     #if defined(USE_SSE2) || defined(USE_NEON)
         #if defined(USE_SSE2)
     // At least a multiple of 16, with SSE2.
